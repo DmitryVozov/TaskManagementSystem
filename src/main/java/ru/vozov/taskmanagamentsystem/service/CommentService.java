@@ -99,6 +99,6 @@ public class CommentService {
         User authenticatedUser = authService.getAuthenticatedUser();
         //Оставлять комментарии может админ и испольнитель задачи
         //Обновлять и удалять комментарий может админ и автор комментария
-        return !(authenticatedUser.isAdmin() || authenticatedUser.getId().equals(owner.getId()));
+        return !(authenticatedUser.isAdmin() || (owner != null && authenticatedUser.getId().equals(owner.getId())));
     }
 }

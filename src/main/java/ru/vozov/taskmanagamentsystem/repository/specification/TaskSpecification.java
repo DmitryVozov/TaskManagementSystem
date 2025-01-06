@@ -1,12 +1,10 @@
 package ru.vozov.taskmanagamentsystem.repository.specification;
 
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Component;
 import ru.vozov.taskmanagamentsystem.model.Task;
 
 import java.util.UUID;
 
-@Component
 public class TaskSpecification {
     public static Specification<Task> filterByTitle(String title) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.like(root.get("title"), "%" + title + "%");

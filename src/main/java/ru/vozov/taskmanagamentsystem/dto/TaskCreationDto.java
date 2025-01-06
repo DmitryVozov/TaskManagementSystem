@@ -16,9 +16,6 @@ public record TaskCreationDto(
         @NotNull(message = "priority is required field")
         Task.Priority priority,
 
-        @NotNull(message = "status is required field")
-        Task.Status status,
-
         UUID executorId
 ) {
 }

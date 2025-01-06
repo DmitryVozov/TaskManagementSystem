@@ -64,7 +64,7 @@ public class TaskService {
                 .title(taskCreationDto.title())
                 .description(taskCreationDto.description())
                 .priority(taskCreationDto.priority())
-                .status(taskCreationDto.status())
+                .status(Task.Status.TODO)
                 .author(author)
                 .executor(executor)
                 .build();
@@ -81,44 +81,59 @@ public class TaskService {
          Task task = taskRepository.findById(id)
                  .orElseThrow(() -> new ResourceNotFoundException(String.format("Task with id %s not found", id)));
 
-         if (!actionIsAvailable(task, taskUpdateDto)) {
-             throw new AccessDeniedException("You can't update this task. Admin can update title, description, priority, executor. Executor can update status.");
+         User user = authService.getAuthenticatedUser();
+
+         if (!actionIsAvailable(user, task)) {
+             throw new AccessDeniedException("Only admin and executor of task can update this task.");
          }
 
-         if (taskUpdateDto.title() != null) {
-             if (taskUpdateDto.title().isBlank()) {
-                throw new BlankFieldException("Title cannot be blank");
+         if (user.isAdmin()) {
+             if (taskUpdateDto.title() == null && taskUpdateDto.description() == null && taskUpdateDto.priority() == null && taskUpdateDto.status() == null && taskUpdateDto.executorId() == null) {
+                 throw new NoDataToUpdateException("No data to update task, you can update title, description, priority, status and executor");
              }
 
-             task.setTitle(taskUpdateDto.title());
-         }
+             if (taskUpdateDto.title() != null) {
+                 if (taskUpdateDto.title().isBlank()) {
+                     throw new BlankFieldException("Title cannot be blank");
+                 }
 
-         if (taskUpdateDto.description() != null) {
-             if (taskUpdateDto.description().isBlank()) {
-                 throw new BlankFieldException("Description cannot be blank");
+                 task.setTitle(taskUpdateDto.title());
              }
 
-             task.setDescription(taskUpdateDto.description());
-         }
+             if (taskUpdateDto.description() != null) {
+                 if (taskUpdateDto.description().isBlank()) {
+                     throw new BlankFieldException("Description cannot be blank");
+                 }
 
-         if (taskUpdateDto.priority() != null) {
-             task.setPriority(taskUpdateDto.priority());
-         }
+                 task.setDescription(taskUpdateDto.description());
+             }
 
-         if (taskUpdateDto.status() != null) {
+             if (taskUpdateDto.priority() != null) {
+                 task.setPriority(taskUpdateDto.priority());
+             }
+
+             if (taskUpdateDto.status() != null) {
+                 task.setStatus(taskUpdateDto.status());
+             }
+
+             if (taskUpdateDto.executorId() != null) {
+                 UUID executorId = taskUpdateDto.executorId();
+                 User executor = userRepository.findById(executorId)
+                         .orElseThrow(() -> new UserNotFoundException(String.format("Executor with id %s not exists", executorId)));
+
+                 if (!executor.isUser()) {
+                     throw new IncorrectExecutorRoleException("Executor must has role USER");
+                 }
+
+                 task.setExecutor(executor);
+             }
+         }
+         else {
+             if (taskUpdateDto.status() == null) {
+                 throw new NoDataToUpdateException("No data to update task, you can update status");
+             }
+
              task.setStatus(taskUpdateDto.status());
-         }
-
-         if (taskUpdateDto.executorId() != null) {
-             UUID executorId = taskUpdateDto.executorId();
-             User executor = userRepository.findById(executorId)
-                     .orElseThrow(() -> new UserNotFoundException(String.format("Executor with id %s not exists", executorId)));
-
-             if (!executor.isUser()) {
-                 throw new IncorrectExecutorRoleException("Executor must has role USER");
-             }
-
-             task.setExecutor(executor);
          }
 
          taskRepository.save(task);
@@ -150,15 +165,6 @@ public class TaskService {
            UUID executorId,
            PageRequest pageRequest
     ) {
-        //TODO
-        //Проверить будет ли работать без этой проверки
-        if (title == null && description == null && priority == null && status == null && authorId == null && executorId == null) {
-                return new ResponseEntity<>(
-                    taskRepository.findAll(pageRequest).map(TaskDto::convert),
-                    HttpStatus.OK
-                );
-        }
-
         Specification<Task> specification = Specification.where(null);
 
         if (title != null) {
@@ -191,27 +197,8 @@ public class TaskService {
         );
     }
 
-    //Админ может обновлять все, кроме статуса, испольнитель задачи только статус
-    private boolean actionIsAvailable(Task task, TaskUpdateDto taskUpdateDto) {
-        User user = authService.getAuthenticatedUser();
-
-        return (
-            user.getId().equals(task.getExecutor().getId())
-            && taskUpdateDto.status() != null
-            && taskUpdateDto.title() == null
-            && taskUpdateDto.description() == null
-            && taskUpdateDto.priority() == null
-            && taskUpdateDto.executorId() == null
-        )
-        || (
-            user.isAdmin()
-            && (
-                taskUpdateDto.title() != null
-                || taskUpdateDto.description() != null
-                || taskUpdateDto.priority() != null
-                || taskUpdateDto.executorId() != null
-            )
-            && taskUpdateDto.status() == null
-        );
+    private boolean actionIsAvailable(User user, Task task) {
+        User executor = task.getExecutor();
+        return (executor != null && user.getId().equals(executor.getId())) || user.isAdmin();
     }
 }

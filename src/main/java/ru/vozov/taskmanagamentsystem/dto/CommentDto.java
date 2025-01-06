@@ -19,7 +19,7 @@ public record CommentDto(
                 comment.getText(),
                 comment.getCreatedAt(),
                 comment.getTask().getId(),
-                comment.getCommentator().getId()
+                comment.getCommentator() == null ? null : comment.getCommentator().getId()
         );
     }
 

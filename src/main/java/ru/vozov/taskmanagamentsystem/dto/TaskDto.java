@@ -24,8 +24,8 @@ public record TaskDto (
                 task.getDescription(),
                 task.getPriority(),
                 task.getStatus(),
-                task.getAuthor().getId(),
-                task.getExecutor().getId(),
+                task.getAuthor() == null ? null : task.getAuthor().getId(),
+                task.getExecutor() == null ? null : task.getExecutor().getId(),
                 task.getComments() == null ? null : CommentDto.convert(task.getComments())
         );
     }
