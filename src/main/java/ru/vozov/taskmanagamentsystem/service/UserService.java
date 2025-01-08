@@ -4,8 +4,6 @@ import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.vozov.taskmanagamentsystem.dto.UserUpdateDto;
 import ru.vozov.taskmanagamentsystem.dto.RegistrationUserDto;
-import ru.vozov.taskmanagamentsystem.dto.UserDto;
 import ru.vozov.taskmanagamentsystem.exception.*;
 import ru.vozov.taskmanagamentsystem.model.Role;
 import ru.vozov.taskmanagamentsystem.model.User;
@@ -42,22 +39,20 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public void save(RegistrationUserDto registrationUserDto, Role role) {
+    public User save(RegistrationUserDto registrationUserDto, Role role) {
         User user = User.builder()
                 .username(registrationUserDto.username())
                 .password(passwordEncoder.encode(registrationUserDto.password()))
                 .email(registrationUserDto.email())
                 .roles(List.of(role))
                 .build();
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<UserDto> findById(UUID id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(String.format("Customer with id %s not found", id)));
-
-        return new ResponseEntity<>(UserDto.convert(user), HttpStatus.OK);
+    public User findById(UUID id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(String.format("User with id %s not found", id)));
     }
 
     @Transactional(readOnly = true)
@@ -66,10 +61,16 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional(readOnly = true)
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException(String.format("User with email %s not found", email)));
+    }
+
+    @Transactional(readOnly = true)
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException(String.format("Customer with email %s not found", username)));
+                .orElseThrow(() -> new UsernameNotFoundException(String.format("User with email %s not found", username)));
 
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
@@ -79,9 +80,9 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public ResponseEntity<UserDto> update(UUID id, UserUpdateDto userUpdateDto) {
+    public User update(UUID id, UserUpdateDto userUpdateDto) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(String.format("Customer with id %s not found", id)));
+                .orElseThrow(() -> new ResourceNotFoundException(String.format("User with id %s not found", id)));
 
         User authenticatedUser = authService.getAuthenticatedUser();
 
@@ -133,28 +134,22 @@ public class UserService implements UserDetailsService {
             user.setUsername(userUpdateDto.username());
         }
 
-        userRepository.save(user);
-
-        return new ResponseEntity<>(UserDto.convert(user), HttpStatus.OK);
+        return userRepository.save(user);
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<List<UserDto>> findAll() {
-        return new ResponseEntity<>(
-                UserDto.convert(userRepository.findAll()),
-                HttpStatus.OK
-        );
+    public List<User> findAll() {
+        return userRepository.findAll();
     }
 
     @Transactional
-    public ResponseEntity<?> delete(UUID id) {
+    public void delete(UUID id) {
         if (!userRepository.existsById(id)) {
             throw new ResourceNotFoundException(
-                    String.format("Customer with id %s not found", id)
+                    String.format("User with id %s not found", id)
             );
         }
 
         userRepository.deleteById(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

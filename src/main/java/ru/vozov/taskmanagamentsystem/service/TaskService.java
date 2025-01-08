@@ -6,11 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.vozov.taskmanagamentsystem.dto.TaskDto;
 import ru.vozov.taskmanagamentsystem.dto.TaskCreationDto;
 import ru.vozov.taskmanagamentsystem.dto.TaskUpdateDto;
 import ru.vozov.taskmanagamentsystem.exception.*;
@@ -37,15 +34,13 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<TaskDto> findById(UUID id) {
-        Task task = taskRepository.findById(id)
+    public Task findById(UUID id) {
+        return taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("Task with id %s not found", id)));
-
-        return new ResponseEntity<>(TaskDto.convert(task), HttpStatus.OK);
     }
 
     @Transactional
-    public ResponseEntity<TaskDto> save(TaskCreationDto taskCreationDto) {
+    public Task save(TaskCreationDto taskCreationDto) {
         User author = authService.getAuthenticatedUser();
 
         UUID executorId = taskCreationDto.executorId();
@@ -68,16 +63,11 @@ public class TaskService {
                 .author(author)
                 .executor(executor)
                 .build();
-        taskRepository.save(task);
-
-        return new ResponseEntity<>(
-                TaskDto.convert(task),
-                HttpStatus.CREATED
-        );
+        return taskRepository.save(task);
     }
 
     @Transactional
-    public ResponseEntity<TaskDto> update(UUID id, TaskUpdateDto taskUpdateDto) {
+    public Task update(UUID id, TaskUpdateDto taskUpdateDto) {
          Task task = taskRepository.findById(id)
                  .orElseThrow(() -> new ResourceNotFoundException(String.format("Task with id %s not found", id)));
 
@@ -136,27 +126,21 @@ public class TaskService {
              task.setStatus(taskUpdateDto.status());
          }
 
-         taskRepository.save(task);
-
-         return new ResponseEntity<>(
-                 TaskDto.convert(task),
-                 HttpStatus.OK
-         );
+         return taskRepository.save(task);
     }
 
     @Transactional
-    public ResponseEntity<?> delete(UUID id) {
+    public void delete(UUID id) {
         if (!taskRepository.existsById(id)) {
             throw new ResourceNotFoundException(
                     String.format("Task with id %s not found", id)
             );
         }
         taskRepository.deleteById(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<Page<TaskDto>> findTasksByFilter(
+    public Page<Task> findTasksByFilter(
            String title,
            String description,
            String priority,
@@ -191,10 +175,7 @@ public class TaskService {
             specification = specification.and(TaskSpecification.filterByExecutor(executorId));
         }
 
-        return new ResponseEntity<>(
-                taskRepository.findAll(specification, pageRequest).map(TaskDto::convert),
-                HttpStatus.OK
-        );
+        return taskRepository.findAll(specification, pageRequest);
     }
 
     private boolean actionIsAvailable(User user, Task task) {

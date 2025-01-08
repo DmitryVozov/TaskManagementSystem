@@ -24,6 +24,10 @@ public record CommentDto(
     }
 
     public static List<CommentDto> convert(List<Comment> comments) {
+        if (comments == null) {
+            return List.of();
+        }
+
         return comments.stream().map(CommentDto::convert).collect(Collectors.toList());
     }
 }

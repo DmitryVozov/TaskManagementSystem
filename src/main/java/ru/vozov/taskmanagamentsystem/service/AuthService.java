@@ -3,22 +3,16 @@ package ru.vozov.taskmanagamentsystem.service;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.vozov.taskmanagamentsystem.dto.JwtDto;
-import ru.vozov.taskmanagamentsystem.dto.LoginUserDto;
-import ru.vozov.taskmanagamentsystem.dto.RegistrationUserDto;
+import ru.vozov.taskmanagamentsystem.dto.*;
 import ru.vozov.taskmanagamentsystem.exception.EmailAlreadyExistsException;
 import ru.vozov.taskmanagamentsystem.exception.SignInException;
-import ru.vozov.taskmanagamentsystem.exception.UserNotFoundException;
 import ru.vozov.taskmanagamentsystem.model.User;
-import ru.vozov.taskmanagamentsystem.repository.UserRepository;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -27,18 +21,16 @@ public class AuthService {
     RoleService roleService;
     JwtService jwtService;
     AuthenticationManager authenticationManager;
-    UserRepository userRepository;
 
     @Autowired
-    public AuthService(UserService userService, RoleService roleService, JwtService jwtService, AuthenticationManager authenticationManager, UserRepository userRepository) {
+    public AuthService(UserService userService, RoleService roleService, JwtService jwtService, AuthenticationManager authenticationManager) {
         this.userService = userService;
         this.roleService = roleService;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
-        this.userRepository = userRepository;
     }
 
-    public ResponseEntity<JwtDto> signUp(RegistrationUserDto registrationUserDto) {
+    public RegistrationUserResponseDto signUp(RegistrationUserDto registrationUserDto) {
         if (userService.existsByEmail(registrationUserDto.email())) {
             throw new EmailAlreadyExistsException(
                     String.format(
@@ -48,19 +40,16 @@ public class AuthService {
             );
         }
 
-        userService.save(registrationUserDto, roleService.findByName("ROLE_USER").orElseThrow());
-
-        return new ResponseEntity<>(
-                new JwtDto(
-                        jwtService.generateToken(
-                            userService.loadUserByUsername(registrationUserDto.email())
-                        )
-                ),
-                HttpStatus.CREATED
+        User user = userService.save(registrationUserDto, roleService.findByName("ROLE_USER").orElseThrow());
+        return new RegistrationUserResponseDto(
+                UserDto.convert(user),
+                jwtService.generateToken(
+                        userService.loadUserByUsername(registrationUserDto.email())
+                )
         );
     }
 
-    public ResponseEntity<JwtDto> signIn(LoginUserDto loginUserDto) {
+    public JwtDto signIn(LoginUserDto loginUserDto) {
         try {
             authenticate(loginUserDto.email(), loginUserDto.password());
         }
@@ -68,12 +57,10 @@ public class AuthService {
             throw new SignInException("incorrect username or password");
         }
 
-        return ResponseEntity.ok(
-                new JwtDto(
-                        jwtService.generateToken(
-                                userService.loadUserByUsername(loginUserDto.email())
-                        )
-                )
+        return new JwtDto(
+            jwtService.generateToken(
+                    userService.loadUserByUsername(loginUserDto.email())
+            )
         );
     }
 
@@ -89,7 +76,6 @@ public class AuthService {
     @Transactional(readOnly = true)
     public User getAuthenticatedUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException(String.format("User with email %s not found", email)));
+        return userService.findByEmail(email);
     }
 }

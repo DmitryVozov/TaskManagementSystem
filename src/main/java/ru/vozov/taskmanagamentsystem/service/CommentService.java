@@ -3,12 +3,9 @@ package ru.vozov.taskmanagamentsystem.service;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.vozov.taskmanagamentsystem.dto.CommentCreationDto;
-import ru.vozov.taskmanagamentsystem.dto.CommentDto;
 import ru.vozov.taskmanagamentsystem.dto.CommentUpdateDto;
 import ru.vozov.taskmanagamentsystem.exception.AccessDeniedException;
 import ru.vozov.taskmanagamentsystem.exception.ResourceNotFoundException;
@@ -37,15 +34,13 @@ public class CommentService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<CommentDto> findById(UUID id) {
-        Comment comment = commentRepository.findById(id)
+    public Comment findById(UUID id) {
+        return commentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("Comment with id %s not found", id)));
-
-        return new ResponseEntity<>(CommentDto.convert(comment), HttpStatus.OK);
     }
 
     @Transactional
-    public ResponseEntity<CommentDto> save(CommentCreationDto commentCreationDto) {
+    public Comment save(CommentCreationDto commentCreationDto) {
         Task task = taskRepository.findById(commentCreationDto.taskId())
                 .orElseThrow(() -> new TaskNotFoundException(String.format("Task with id %s not found",commentCreationDto.taskId())));
 
@@ -60,13 +55,11 @@ public class CommentService {
                 .commentator(authService.getAuthenticatedUser())
                 .build();
 
-        commentRepository.save(comment);
-
-        return new ResponseEntity<>(CommentDto.convert(comment), HttpStatus.CREATED);
+        return commentRepository.save(comment);
     }
 
     @Transactional
-    public ResponseEntity<?> delete(UUID id) {
+    public void delete(UUID id) {
         Comment comment = commentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(String.format("Comment with id %s not found", id)));
 
         if (actionIsUnavailable(comment.getCommentator())) {
@@ -74,11 +67,10 @@ public class CommentService {
         }
 
         commentRepository.deleteById(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @Transactional
-    public ResponseEntity<CommentDto> update(UUID id, CommentUpdateDto commentUpdateDto) {
+    public Comment update(UUID id, CommentUpdateDto commentUpdateDto) {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("Comment with id %s not found", id)));
 
@@ -87,12 +79,7 @@ public class CommentService {
         }
 
         comment.setText(commentUpdateDto.text());
-        commentRepository.save(comment);
-
-        return new ResponseEntity<>(
-                CommentDto.convert(comment),
-                HttpStatus.OK
-        );
+        return commentRepository.save(comment);
     }
 
     private boolean actionIsUnavailable(User owner) {

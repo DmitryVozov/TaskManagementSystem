@@ -26,11 +26,15 @@ public record TaskDto (
                 task.getStatus(),
                 task.getAuthor() == null ? null : task.getAuthor().getId(),
                 task.getExecutor() == null ? null : task.getExecutor().getId(),
-                task.getComments() == null ? null : CommentDto.convert(task.getComments())
+                CommentDto.convert(task.getComments())
         );
     }
 
     public static List<TaskDto> convert(List<Task> tasks) {
+        if (tasks == null) {
+            return List.of();
+        }
+
         return tasks.stream().map(TaskDto::convert).collect(Collectors.toList());
     }
 }

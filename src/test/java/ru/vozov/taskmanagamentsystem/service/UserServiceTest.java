@@ -5,11 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import ru.vozov.taskmanagamentsystem.dto.UserDto;
 import ru.vozov.taskmanagamentsystem.dto.UserUpdateDto;
 import ru.vozov.taskmanagamentsystem.exception.*;
 import ru.vozov.taskmanagamentsystem.model.Role;
@@ -50,15 +47,13 @@ public class UserServiceTest {
 
         when(userRepository.findById(id)).thenReturn(Optional.of(user));
 
-        ResponseEntity<UserDto> response = userService.findById(id);
+        User response = userService.findById(id);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        UserDto userDto = response.getBody();
-        assertNotNull(userDto);
-        assertEquals(userDto.id(), user.getId());
-        assertEquals(userDto.username(), user.getUsername());
-        assertEquals(userDto.email(), user.getEmail());
-        assertTrue(userDto.tasks().isEmpty());
+        assertNotNull(response);
+        assertEquals(user.getId(), response.getId());
+        assertEquals(user.getUsername(), response.getUsername());
+        assertEquals(user.getEmail(), response.getEmail());
+        assertTrue(response.getExecutorTasks().isEmpty());
         verify(userRepository, times(1)).findById(id);
     }
 
@@ -231,12 +226,12 @@ public class UserServiceTest {
         when(userRepository.findById(id)).thenReturn(Optional.of(updateUser));
         when(authService.getAuthenticatedUser()).thenReturn(authenticatedUser);
         when(passwordEncoder.encode(userUpdateDto.password())).thenReturn("updated");
+        when(userRepository.save(updateUser)).thenReturn(updateUser);
 
-        ResponseEntity<UserDto> response = userService.update(id, userUpdateDto);
-        UserDto userDto = response.getBody();
+        User response = userService.update(id, userUpdateDto);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(id, userDto.id());
+        assertNotNull(response);
+        assertEquals(id, response.getId());
         verify(userRepository, times(1)).findById(id);
         verify(authService, times(1)).getAuthenticatedUser();
     }
@@ -284,12 +279,13 @@ public class UserServiceTest {
         when(userRepository.findById(id)).thenReturn(Optional.of(updateUser));
         when(authService.getAuthenticatedUser()).thenReturn(authenticatedUser);
         when(userRepository.existsByEmail(userUpdateDto.email())).thenReturn(false);
+        when(userRepository.save(updateUser)).thenReturn(updateUser);
 
-        ResponseEntity<UserDto> response = userService.update(id, userUpdateDto);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        UserDto userDto = response.getBody();
-        assertEquals(id, userDto.id());
-        assertEquals(userUpdateDto.email(), userDto.email());
+        User response = userService.update(id, userUpdateDto);
+
+        assertNotNull(response);
+        assertEquals(id, response.getId());
+        assertEquals(userUpdateDto.email(), response.getEmail());
         verify(userRepository, times(1)).findById(id);
         verify(authService, times(1)).getAuthenticatedUser();
         verify(userRepository, times(1)).existsByEmail(userUpdateDto.email());
@@ -335,12 +331,13 @@ public class UserServiceTest {
 
         when(userRepository.findById(id)).thenReturn(Optional.of(updateUser));
         when(authService.getAuthenticatedUser()).thenReturn(authenticatedUser);
+        when(userRepository.save(updateUser)).thenReturn(updateUser);
 
-        ResponseEntity<UserDto> response = userService.update(id, userUpdateDto);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        UserDto userDto = response.getBody();
-        assertEquals(id, userDto.id());
-        assertEquals(userUpdateDto.username(), userDto.username());
+        User response = userService.update(id, userUpdateDto);
+
+        assertNotNull(response);
+        assertEquals(id, response.getId());
+        assertEquals(userUpdateDto.username(), response.getUsername());
         verify(userRepository, times(1)).findById(id);
         verify(authService, times(1)).getAuthenticatedUser();
     }
@@ -355,13 +352,13 @@ public class UserServiceTest {
 
         when(userRepository.findAll()).thenReturn(expectedUsers);
 
-        ResponseEntity<List<UserDto>> response = userService.findAll();
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        List<UserDto> responseUsers = response.getBody();
-        assertEquals(expectedUsers.size(), responseUsers.size());
-        assertTrue(responseUsers.stream().anyMatch(user -> user.id().equals(test1.getId())));
-        assertTrue(responseUsers.stream().anyMatch(user -> user.id().equals(test2.getId())));
-        assertTrue(responseUsers.stream().anyMatch(user -> user.id().equals(test3.getId())));
+        List<User> response = userService.findAll();
+
+        assertNotNull(response);
+        assertEquals(expectedUsers.size(), response.size());
+        assertTrue(response.stream().anyMatch(user -> user.getId().equals(test1.getId())));
+        assertTrue(response.stream().anyMatch(user -> user.getId().equals(test2.getId())));
+        assertTrue(response.stream().anyMatch(user -> user.getId().equals(test3.getId())));
         verify(userRepository, times(1)).findAll();
     }
 
@@ -369,9 +366,10 @@ public class UserServiceTest {
     void findAll_ShouldReturnEmptyList_WhenUsersNotExist() {
         when(userRepository.findAll()).thenReturn(List.of());
 
-        ResponseEntity<List<UserDto>> response = userService.findAll();
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getBody().isEmpty());
+        List<User> response = userService.findAll();
+
+        assertNotNull(response);
+        assertTrue(response.isEmpty());
         verify(userRepository, times(1)).findAll();
     }
 
@@ -381,9 +379,8 @@ public class UserServiceTest {
 
         when(userRepository.existsById(id)).thenReturn(true);
 
-        ResponseEntity<?> response = userService.delete(id);
+        userService.delete(id);
 
-        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
         verify(userRepository, times(1)).existsById(id);
         verify(userRepository, times(1)).deleteById(id);
     }
