@@ -8,4 +8,6 @@ RESTful API для Системы Управления Задачами. Сер�
 * Spring Data
 * JWT
 * PostgreSQL
+* JUnit
+* Mockito
 * Lombok
