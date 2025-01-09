@@ -69,7 +69,6 @@ public class TaskServiceTest {
 
     @Test
     void save_ShouldSaveTask_WhenTaskIsCorrect() {
-        //TODO
         User user = User.builder()
                 .id(UUID.randomUUID())
                 .username("admin")
@@ -90,7 +89,7 @@ public class TaskServiceTest {
 
 
         when(authService.getAuthenticatedUser()).thenReturn(user);
-        when(taskRepository.save(task)).thenReturn(task);
+        when(taskRepository.save(any(Task.class))).thenReturn(task);
 
         Task response = taskService.save(taskCreationDto);
 
