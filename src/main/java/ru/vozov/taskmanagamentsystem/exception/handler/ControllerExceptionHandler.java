@@ -27,12 +27,6 @@ public class ControllerExceptionHandler {
         return new ErrorDto(400, LocalDateTime.now(), e.getLocalizedMessage());
     }
 
-    @ExceptionHandler(JwtException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ErrorDto accessDeniedException(JwtException e) {
-        return new ErrorDto(403, LocalDateTime.now(), e.getMessage());
-    }
-
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorDto accessDeniedException(AccessDeniedException e) {
