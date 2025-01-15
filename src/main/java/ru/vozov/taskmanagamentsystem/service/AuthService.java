@@ -54,7 +54,7 @@ public class AuthService {
             authenticate(loginUserDto.email(), loginUserDto.password());
         }
         catch (BadCredentialsException e) {
-            throw new SignInException("incorrect username or password");
+            throw new SignInException("incorrect email or password");
         }
 
         return new JwtDto(

@@ -114,7 +114,7 @@ public class TaskServiceTest {
 
         assertThrowsExactly(UserNotFoundException.class, () -> taskService.save(taskCreationDto));
         verify(authService, times(1)).getAuthenticatedUser();
-        verify(taskRepository, times(1)).findById(executorId);
+        verify(userRepository, times(1)).findById(executorId);
     }
 
     @Test

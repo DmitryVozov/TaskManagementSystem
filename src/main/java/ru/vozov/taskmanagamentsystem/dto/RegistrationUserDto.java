@@ -11,7 +11,7 @@ public record RegistrationUserDto(
     @NotBlank(message = "password is required field")
     String password,
 
-    @NotNull(message = "email is required field")
+    @NotBlank(message = "email is required field")
     @Email(message = "incorrect email")
     String email
 ) {
