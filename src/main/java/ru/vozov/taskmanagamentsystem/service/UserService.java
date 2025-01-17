@@ -90,7 +90,7 @@ public class UserService implements UserDetailsService {
             throw new AccessDeniedException("Only the account owner and the admin can update the user");
         }
 
-        if (userUpdateDto.username() == null && userUpdateDto.password() == null && userUpdateDto.oldPassword() == null && userUpdateDto.email() == null) {
+        if (userUpdateDto.username() == null && userUpdateDto.password() == null && userUpdateDto.email() == null) {
             throw new NoDataToUpdateException("No data to update user, you can update your username, password and email");
         }
 
@@ -114,6 +114,10 @@ public class UserService implements UserDetailsService {
         }
 
         if (userUpdateDto.email() != null) {
+            if (userUpdateDto.email().isBlank()) {
+                throw new BlankFieldException("Email cannot be blank");
+            }
+
             if (userRepository.existsByEmail(userUpdateDto.email())) {
                 throw new EmailAlreadyExistsException(
                         String.format(

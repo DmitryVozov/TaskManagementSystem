@@ -44,7 +44,9 @@ public class CommentService {
         Task task = taskRepository.findById(commentCreationDto.taskId())
                 .orElseThrow(() -> new TaskNotFoundException(String.format("Task with id %s not found",commentCreationDto.taskId())));
 
-        if (actionIsUnavailable(task.getExecutor()) ) {
+        User authenticatedUser = authService.getAuthenticatedUser();
+
+        if (actionIsUnavailable(authenticatedUser, task.getExecutor()) ) {
             throw new AccessDeniedException("Only admin or executor of task can leave comment");
         }
 
@@ -52,7 +54,7 @@ public class CommentService {
                 .text(commentCreationDto.text())
                 .createdAt(LocalDateTime.now())
                 .task(task)
-                .commentator(authService.getAuthenticatedUser())
+                .commentator(authenticatedUser)
                 .build();
 
         return commentRepository.save(comment);
@@ -62,7 +64,9 @@ public class CommentService {
     public void delete(UUID id) {
         Comment comment = commentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(String.format("Comment with id %s not found", id)));
 
-        if (actionIsUnavailable(comment.getCommentator())) {
+        User authenticatedUser = authService.getAuthenticatedUser();
+
+        if (actionIsUnavailable(authenticatedUser, comment.getCommentator())) {
             throw new AccessDeniedException("Only admin or creator of comment can delete the comment");
         }
 
@@ -74,7 +78,9 @@ public class CommentService {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("Comment with id %s not found", id)));
 
-        if (actionIsUnavailable(comment.getCommentator()) ) {
+        User authenticatedUser = authService.getAuthenticatedUser();
+
+        if (actionIsUnavailable(authenticatedUser, comment.getCommentator()) ) {
             throw new AccessDeniedException("Only admin or creator of comment can edit the comment");
         }
 
@@ -82,10 +88,9 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
-    private boolean actionIsUnavailable(User owner) {
-        User authenticatedUser = authService.getAuthenticatedUser();
+    private boolean actionIsUnavailable(User user, User owner) {
         //Оставлять комментарии может админ и испольнитель задачи
         //Обновлять и удалять комментарий может админ и автор комментария
-        return !(authenticatedUser.isAdmin() || (owner != null && authenticatedUser.getId().equals(owner.getId())));
+        return !(user.isAdmin() || (owner != null && user.getId().equals(owner.getId())));
     }
 }
