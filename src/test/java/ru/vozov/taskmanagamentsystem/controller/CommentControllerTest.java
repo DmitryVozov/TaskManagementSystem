@@ -50,7 +50,7 @@ public class CommentControllerTest {
         mockMvc.perform(get("/api/comments/{id}", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id))
-                .andExpect(jsonPath("$.text").value("Почти доделал!"))
+                .andExpect(jsonPath("$.text").value("I am almost done"))
                 .andExpect(jsonPath("$.createdAt").exists())
                 .andExpect(jsonPath("$.taskId").value("ea8efca6-8625-4686-8bf8-7c4153d9666e"))
                 .andExpect(jsonPath("$.commentatorId").value("8f7985de-a578-4419-b93f-ff9d29969b11"));

@@ -56,14 +56,14 @@ select  'b2f1c5b0-31b1-4a15-9ce0-d20300965218',
 
 insert into comment (id, text, created_at, task_id, commentator_id)
 select  'd061c985-a0f6-420f-b49f-a85971fb27e4',
-        'Почти доделал!',
+        'I am almost done',
         CURRENT_TIMESTAMP(),
         'ea8efca6-8625-4686-8bf8-7c4153d9666e',
         '8f7985de-a578-4419-b93f-ff9d29969b11';
 
 insert into comment (id, text, created_at, task_id, commentator_id)
 select  '8ee7714a-f747-4a39-b589-9bcffc6db573',
-        'Нужно быстрее доделать эту задачу',
+        'We need to finish this task faster.',
         CURRENT_TIMESTAMP(),
         'ea8efca6-8625-4686-8bf8-7c4153d9666e',
         '2bc86005-4208-45da-a289-99c9e8c5d432';
