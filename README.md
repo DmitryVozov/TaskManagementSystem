@@ -32,7 +32,7 @@ Task Management System - это RESTful API приложение для упра
    git clone https://github.com/DmitryVozov/TaskManagementSystem
    cd TaskManagementSystem
    ```
-2. Изменить настройки файла [.env](https://github.com/DmitryVozov/TaskManagementSystem/blob/main/.env) по необходимости:
+2. Измените настройки файла [.env](https://github.com/DmitryVozov/TaskManagementSystem/blob/main/.env) при необходимости:
    * URL базы данных  
      ```
      DB_URL=jdbc:postgresql://db:5432/task_manager
@@ -63,8 +63,7 @@ Task Management System - это RESTful API приложение для упра
    ```
 ## ❓Работа с API
 ### Тестовые данные
-При запуске проекта SQL скрипты заполняют БД необходимыми данными для работы. Создаются две роли: ROLE_ADMIN и ROLE_USER.  
-Создается администратор:  
+При запуске проекта SQL скрипты заполняют БД необходимыми данными для работы. Создаются две роли: ROLE_ADMIN и ROLE_USER. Создается администратор:  
 * email: admin@gmail.com
 * пароль: admin
 ### Получение доступа к API
